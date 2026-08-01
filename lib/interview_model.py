@@ -42,6 +42,8 @@ _DONT_KNOW = re.compile(
     r"\bi\s+have\s+no\s+idea\b|\bno\s+idea\b|"
     r"\bi\s+couldn'?t\s+(?:answer|say)\b|\bi\s+have\s+no\s+answer\b|"
     r"\bi\s+(?:don'?t|do\s+not)\s+want\s+to\s+(?:answer|say)\b|"
+    r"\bi\s+(?:don'?t|do\s+not)\s+think\s+i\s+can\b|"
+    r"\bi\s+(?:can'?t|cannot)\s+(?:answer|say)\b|"
     r"\bidk\b",
     re.IGNORECASE,
 )
