@@ -1,0 +1,10 @@
+.venv/
+models/*
+interviews/*
+__pycache__/
+*.pyc
+.DS_Store
+content/
+.claude/
+*.md 
+!README.md

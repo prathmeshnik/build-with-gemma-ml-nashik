@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Interviewer</title>
+<style>
+  :root {
+    --bg-1: #0b1020;
+    --bg-2: #121a33;
+    --surface: rgba(255, 255, 255, 0.045);
+    --surface-strong: #1b2437;
+    --border: rgba(255, 255, 255, 0.09);
+    --white-soft: rgba(255, 255, 255, 0.05);
+    --text: #e9eef7;
+    --muted: #94a3bd;
+    /* Single cool anchor hue family. accent-2 is the bright text-accent for
+       small marks on dark; accent-fill is the darker fill that carries white
+       text at 6.3:1. No gradients — solid fills only. */
+    --accent-1: #6366f1;  
+    --accent-2: #22d3ee;
+    --accent-fill: #4f46e5;
+    --accent-fill-hover: #4338ca;
+    --accent-1-soft: rgba(99, 102, 241, 0.14);
+    --accent-1-ring: rgba(99, 102, 241, 0.35);
+    --accent-2-soft: rgba(34, 211, 238, 0.14);
+    --accent-2-line: rgba(34, 211, 238, 0.4);
+    --ok: #34d399;
+    --ok-soft: rgba(52, 211, 153, 0.12);
+    --ok-line: rgba(52, 211, 153, 0.28);
+    --bg-bloom: rgba(99, 102, 241, 0.16);
+    --shadow-elev: 0 8px 20px rgba(2, 6, 23, 0.5);
+    --radius: 18px;
+    --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
+  body {
+    font-family: var(--font);
+    color: var(--text);
+    background:
+      radial-gradient(1100px 600px at 85% -10%, var(--bg-bloom), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1.25rem 4rem;
+    overflow-x: clip;
+  }
+  .container { max-width: 680px; width: 100%; }
+
+  /* Header */
+  header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .brand { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+  .brand .orb {
+    width: 38px; height: 38px; border-radius: 12px; flex: none;
+    background: var(--accent-fill);
+    display: grid; place-items: center;
+  }
+  .brand .orb svg { width: 20px; height: 20px; }
+  .brand h1 { font-family: var(--font-mono); font-size: 1.02rem; font-weight: 600; letter-spacing: -0.01em; }
+  .brand .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .privacy-pill {
+    flex: none; display: inline-flex; align-items: center; gap: 0.45rem;
+    font-size: 0.72rem; font-weight: 600; color: var(--ok);
+    background: var(--ok-soft); border: 1px solid var(--ok-line);
+    padding: 0.35rem 0.7rem; border-radius: 999px;
+  }
+  .privacy-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+
+  /* Stage card — interviewer presence */
+  .stage {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.6rem 1.5rem;
+    box-shadow: var(--shadow-elev);
+  }
+  .presence { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.1rem; }
+  .avatar {
+    width: 46px; height: 46px; border-radius: 50%; flex: none; position: relative;
+    background: var(--accent-fill);
+    display: grid; place-items: center;
+    font-weight: 700; color: white; font-size: 1rem;
+  }
+  .avatar::after {
+    content: ""; position: absolute; inset: -5px; border-radius: 50%;
+    border: 2px solid var(--accent-1-ring); opacity: 0;
+  }
+  .stage.listening .avatar::after { opacity: 1; animation: ring 1.6s ease-out infinite; }
+  @keyframes ring { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.45); opacity: 0; } }
+  .presence .who { font-size: 0.86rem; font-weight: 600; }
+  .presence .who small { display: block; font-weight: 500; color: var(--muted); margin-top: 1px; }
+
+  /* Waveform — live while listening (transform, not height) */
+  .wave { display: flex; align-items: center; gap: 3px; height: 22px; opacity: 0.25; }
+  .stage.listening .wave { opacity: 1; }
+  .wave i {
+    width: 3px; height: 100%; border-radius: 3px; background: var(--accent-2);
+    transform: scaleY(0.3); transform-origin: center;
+    animation: bounce 0.9s ease-in-out infinite;
+  }
+  .wave i:nth-child(2) { animation-delay: 0.12s; }
+  .wave i:nth-child(3) { animation-delay: 0.24s; }
+  .wave i:nth-child(4) { animation-delay: 0.36s; }
+  .wave i:nth-child(5) { animation-delay: 0.48s; }
+  @keyframes bounce { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+
+  .question { font-size: 1.12rem; line-height: 1.55; min-height: 2.8rem; overflow-wrap: anywhere; }
+  .question .empty { color: var(--muted); }
+
+  /* Status line */
+  .status-row { display: flex; align-items: center; gap: 0.55rem; margin-top: 1rem; font-size: 0.85rem; color: var(--muted); }
+  .status-row .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; transition: background 0.2s; }
+  .status-row.listening { color: var(--accent-2); }
+  .status-row.listening .pulse { background: var(--accent-2); animation: blink 1.2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  /* Pipeline phases */
+  #phases { display: flex; gap: 0.4rem; margin-top: 1.1rem; flex-wrap: wrap; }
+  .phase {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
+    padding: 0.25rem 0.6rem; border-radius: 999px;
+    background: var(--white-soft); color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .phase.active { background: var(--accent-2-soft); color: var(--accent-2); border-color: var(--accent-2-line); }
+  .phase.done { background: var(--ok-soft); color: var(--ok); border-color: var(--ok-line); }
+
+  /* Conversation */
+  #chat { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .msg { max-width: 82%; padding: 0.75rem 0.95rem; border-radius: 16px; font-size: 0.94rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+  .msg-interviewer {
+    align-self: flex-start;
+    background: var(--surface-strong); border: 1px solid var(--border);
+    border-bottom-left-radius: 6px;
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: var(--accent-fill);
+    color: white; border-bottom-right-radius: 6px;
+  }
+
+  /* Results: scores + coach (single containment layer — inner items unbordered) */
+  .result { margin-top: 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--shadow-elev); }
+  .result h3 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; }
+  .score-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  .score-item {
+    background: var(--white-soft);
+    border-radius: 12px; padding: 0.5rem 0.9rem; text-align: center; flex: 1; min-width: 84px;
+  }
+  .score-item .label { font-size: 0.68rem; text-transform: capitalize; color: var(--muted); }
+  .score-item .value { font-size: 1.15rem; font-weight: 700; margin-top: 2px; }
+  .coach-box, .followup-box { margin-top: 0.8rem; padding: 0.7rem 0.85rem; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; background: var(--white-soft); }
+  .coach-box strong { color: var(--accent-2); font-weight: 650; }
+  .followup-box strong { color: var(--accent-1); font-weight: 650; }
+
+  /* Controls */
+  .controls { display: flex; gap: 0.75rem; margin-top: 1.4rem; }
+  .btn {
+    appearance: none; border: none; cursor: pointer;
+    font-family: var(--font); font-size: 0.95rem; font-weight: 600;
+    padding: 0.8rem 1.6rem; border-radius: 12px;
+    transition: transform 0.08s, box-shadow 0.15s, opacity 0.15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+  .btn-primary { background: var(--accent-fill); color: white; flex: 1; box-shadow: var(--shadow-elev); }
+  .btn-primary:not(:disabled):hover { background: var(--accent-fill-hover); }
+  .btn-secondary { background: var(--white-soft); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:not(:disabled):hover { background: var(--surface-strong); }
+
+  .hidden { display: none; }
+  footer { margin-top: 1.6rem; text-align: center; font-size: 0.72rem; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) {
+    .avatar::after, .wave i, .status-row.listening .pulse { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <div class="orb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
+        </svg>
+      </div>
+      <div>
+        <h1>AI Interviewer</h1>
+        <div class="sub">Practice &amp; coaching, spoken aloud</div>
+      </div>
+    </div>
+    <span class="privacy-pill"><span class="dot"></span>100% on-device</span>
+  </header>
+
+  <section class="stage" id="stage">
+    <div class="presence">
+      <div class="avatar">AI</div>
+      <div class="who">Your interviewer<small>warm, patient, honest</small></div>
+      <div class="wave" style="margin-left:auto" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+    <div class="question" id="question"><span class="empty">Press Start to begin</span></div>
+
+    <div class="status-row" id="statusWrap">
+      <span class="pulse" aria-hidden="true"></span>
+      <span id="status">Ready when you are</span>
+    </div>
+
+    <div id="phases" class="hidden">
+      <span class="phase" id="phase1">Transcribing</span>
+      <span class="phase" id="phase2">Evaluating</span>
+      <span class="phase" id="phase3">Follow-up</span>
+    </div>
+  </section>
+
+  <div id="chat"></div>
+
+  <div id="result" class="result hidden">
+    <h3>Turn feedback</h3>
+    <div class="score-row" id="scores"></div>
+    <div class="coach-box" id="coach" style="display:none"></div>
+    <div class="followup-box" id="followup"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="startBtn" onclick="start()">Start Interview</button>
+    <button class="btn btn-secondary hidden" id="endBtn" onclick="endInterview()">End Interview</button>
+  </div>
+
+  <footer>Audio is processed entirely on your machine — nothing is uploaded.</footer>
+</div>
+
+<script>
+let micStream = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let isListening = false;
+let running = false;
+let currentAudio = null;
+
+let noAnswerTimer = null;
+let vadInterval = null;
+let vadCtx = null;
+let vadSource = null;
+let vadAnalyser = null;
+let speechDetected = false;
+let silenceMs = 0;
+let handlingSilence = false;
+
+const NO_ANSWER_MS = 15000;  // silent this long with no speech -> "you don't know"
+const ENDPOINT_MS = 1800;    // silence this long after speech -> stop and send
+const RMS_THRESHOLD = 0.01;
+
+const $ = id => document.getElementById(id);
+
+function bubble(role, text) {
+  if (!text) return;
+  const chat = $("chat");
+  const div = document.createElement("div");
+  div.className = "msg msg-" + role;
+  div.textContent = text;
+  chat.appendChild(div);
+  const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  chat.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "nearest" });
+}
+
+function base64ToBlob(b64, type) {
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return new Blob([buf], { type });
+}
+
+async function toWav(blob) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const audioBuf = await ctx.decodeAudioData(await blob.arrayBuffer());
+  const offline = new OfflineAudioContext(1, Math.ceil(audioBuf.duration * 16000), 16000);
+  const src = offline.createBufferSource();
+  src.buffer = audioBuf;
+  src.connect(offline.destination);
+  src.start();
+  const rendered = await offline.startRendering();
+  return encodeWav(rendered.getChannelData(0), 16000);
+}
+
+function encodeWav(samples, sampleRate) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const writeStr = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+  writeStr(0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, "data");
+  view.setUint32(40, samples.length * 2, true);
+  let off = 44;
+  for (let i = 0; i < samples.length; i++) {
+    let s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    off += 2;
+  }
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
+function playAudio(b64, onDone) {
+  if (currentAudio) { currentAudio.pause(); currentAudio.onended = null; currentAudio = null; }
+  if (!b64) {
+    console.warn("playAudio: no audio bytes from server (TTS failed server-side)");
+    setStatus("No audio from server — check terminal log");
+    if (onDone) onDone();
+    return;
+  }
+  const blob = base64ToBlob(b64, "audio/wav");
+  console.log("playAudio: received", blob.size, "bytes");
+  const url = URL.createObjectURL(blob);
+  const a = new Audio(url);
+  currentAudio = a;
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    URL.revokeObjectURL(url);
+    currentAudio = null;
+    if (onDone) onDone();
+  };
+  a.onended = finish;
+  a.onerror = () => { console.error("playAudio: audio decode/play error"); finish(); };
+  a.play().catch(err => { console.error("playAudio: play() rejected:", err); finish(); });
+}
+
+function pickMime() {
+  if (typeof MediaRecorder === "undefined") return "";
+  const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+  for (const m of candidates) {
+    if (MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return "";
+}
+
+function setPhase(id, state) {
+  $(id).className = "phase " + state;
+}
+
+function resetPhases() {
+  ["phase1", "phase2", "phase3"].forEach(id => setPhase(id, "pending"));
+}
+
+function setStatus(msg, listening) {
+  $("status").textContent = msg;
+  $("statusWrap").classList.toggle("listening", !!listening);
+}
+
+async function start() {
+  $("startBtn").disabled = true;
+  $("result").classList.add("hidden");
+  $("phases").classList.remove("hidden");
+  resetPhases();
+  setStatus("Starting interview...");
+  try {
+    if (!micStream) {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+    const res = await fetch("/start", { method: "POST" });
+    const data = await res.json();
+    $("question").innerHTML = "";
+    $("question").textContent = data.question;
+    running = true;
+    $("endBtn").classList.remove("hidden");
+    $("startBtn").classList.add("hidden");
+    setStatus("Speaking...");
+    playAudio(data.audio, () => startListening());
+  } catch (e) {
+    setStatus("Error: " + e.message);
+    $("startBtn").disabled = false;
+  }
+}
+
+function startListening() {
+  if (!running || isListening) return;
+  isListening = true;
+  $("stage").classList.add("listening");
+  setStatus("Listening — answer naturally", true);
+  audioChunks = [];
+  speechDetected = false;
+  silenceMs = 0;
+  handlingSilence = false;
+
+  const mime = pickMime();
+  try {
+    mediaRecorder = new MediaRecorder(micStream, mime ? { mimeType: mime } : undefined);
+  } catch (e) {
+    console.error("MediaRecorder(" + (mime || "default") + ") failed:", e);
+    mediaRecorder = new MediaRecorder(micStream);  // absolute fallback: browser default
+  }
+  mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) audioChunks.push(e.data); };
+  mediaRecorder.onstop = async () => {
+    stopVad();
+    isListening = false;
+    $("stage").classList.remove("listening");
+    if (handlingSilence) { handlingSilence = false; return; }
+    if (!audioChunks.length) { console.warn("no audio captured — restarting listen"); startListening(); return; }
+    const blob = new Blob(audioChunks, { type: "audio/webm" });
+    console.log("recording stopped:", blob.size, "bytes");
+    const wavBlob = await toWav(blob);
+    await sendAudio(wavBlob);
+  };
+  mediaRecorder.start(250);
+
+  startVad();
+  noAnswerTimer = setTimeout(() => {
+    if (!speechDetected) {
+      handlingSilence = true;
+      stopVad();
+      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      setStatus("No answer — explaining...");
+      explain();
+    }
+  }, NO_ANSWER_MS);
+}
+
+function startVad() {
+  vadCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (vadCtx.state === "suspended") vadCtx.resume();
+  vadSource = vadCtx.createMediaStreamSource(micStream);
+  vadAnalyser = vadCtx.createAnalyser();
+  vadAnalyser.fftSize = 2048;
+  vadSource.connect(vadAnalyser);
+  const buf = new Float32Array(vadAnalyser.fftSize);
+  vadInterval = setInterval(() => {
+    vadAnalyser.getFloatTimeDomainData(buf);
+    let sum = 0;
+    for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    const rms = Math.sqrt(sum / buf.length);
+    if (rms > RMS_THRESHOLD) {
+      if (!speechDetected) {
+        speechDetected = true;
+        clearTimeout(noAnswerTimer);
+        noAnswerTimer = null;
+      }
+      silenceMs = 0;
+    } else {
+      silenceMs += 100;
+      if (speechDetected && silenceMs >= ENDPOINT_MS) {
+        stopRecordingAndSend();
+      }
+    }
+  }, 100);
+}
+
+function stopVad() {
+  if (vadInterval) { clearInterval(vadInterval); vadInterval = null; }
+  if (noAnswerTimer) { clearTimeout(noAnswerTimer); noAnswerTimer = null; }
+  if (vadSource) { try { vadSource.disconnect(); } catch (e) {} vadSource = null; }
+  if (vadCtx) { try { vadCtx.close(); } catch (e) {} vadCtx = null; }
+}
+
+function stopRecordingAndSend() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+}
+
+async function sendAudio(blob) {
+  resetPhases();
+  setPhase("phase1", "active");
+  setStatus("Processing...");
+  try {
+    const res = await fetch("/process", { method: "POST", body: blob });
+    const data = await res.json();
+    handleTurnResponse(data);
+  } catch (e) {
+    setStatus("Error: " + e.message);
+    startListening();
+  }
+}
+
+async function explain() {
+  resetPhases();
+  setPhase("phase1", "active");
+  setStatus("No answer — explaining...");
+  try {
+    const res = await fetch("/explain", { method: "POST" });
+    const data = await res.json();
+    handleTurnResponse(data);
+  } catch (e) {
+    setStatus("Error: " + e.message);
+    startListening();
+  }
+}
+
+function handleTurnResponse(data) {
+  if (data.error) {
+    console.error("server error:", data.error);
+    setStatus("Error: " + data.error);
+    startListening();
+    return;
+  }
+  console.log("turn response:", {
+    intro: data.intro,
+    reply: (data.reply || "").slice(0, 80),
+    audioChars: data.reply_audio ? data.reply_audio.length : 0,
+    next: data.next_question, done: data.done,
+  });
+
+  // Your words go in a right-aligned bubble (skip the "[no answer]" marker).
+  if (data.transcript && data.transcript !== "[no answer]") {
+    bubble("user", data.transcript);
+  }
+
+  if (data.intro) {
+    bubble("interviewer", data.reply || data.transcript);
+    $("question").textContent = data.reply || data.transcript;
+    setStatus("Speaking...");
+    playAudio(data.reply_audio, () => startListening());
+    return;
+  }
+
+  setPhase("phase1", "done");
+
+  // Show the turn feedback card once there's something to show.
+  $("result").classList.remove("hidden");
+  if (data.feedback) {
+    $("coach").style.display = "block";
+    $("coach").innerHTML = "<strong>Coach:</strong> " + data.feedback;
+  }
+
+  setPhase("phase2", "active");
+  const scoresHtml = ["relevance", "completeness", "clarity"]
+    .filter(k => data.scores && data.scores[k])
+    .map(k => `<div class="score-item"><div class="label">${k}</div><div class="value">${data.scores[k]}/10</div></div>`)
+    .join("");
+  $("scores").innerHTML = scoresHtml;
+  setPhase("phase2", "done");
+
+  if (data.follow_up) {
+    setPhase("phase3", "active");
+    $("followup").innerHTML = "<strong>Follow-up:</strong> " + data.follow_up;
+    setPhase("phase3", "done");
+  } else {
+    $("followup").innerHTML = "";
+  }
+
+  // The interviewer's spoken turn becomes the latest bubble + headline.
+  if (data.reply) {
+    bubble("interviewer", data.reply);
+    $("question").textContent = data.reply;
+  } else if (data.next_question) {
+    $("question").textContent = data.next_question;
+  }
+
+  setStatus("Speaking...");
+  playAudio(data.reply_audio, () => {
+    if (data.done) {
+      setStatus("All questions completed. Press End Interview.");
+      running = false;
+    } else {
+      startListening();
+    }
+  });
+}
+
+async function endInterview() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+  stopVad();
+  isListening = false;
+  running = false;
+  $("stage").classList.remove("listening");
+  try {
+    const res = await fetch("/end", { method: "POST" });
+    const data = await res.json();
+    setStatus("Interview ended — " + data.total_turns + " turns. Avg scores: " +
+      JSON.stringify(data.average_scores || {}));
+    $("phases").classList.add("hidden");
+  } catch (e) {
+    setStatus("Error: " + e.message);
+  }
+  $("endBtn").classList.add("hidden");
+  $("startBtn").classList.remove("hidden");
+  $("startBtn").disabled = false;
+}
+</script>
+</body>
+</html>

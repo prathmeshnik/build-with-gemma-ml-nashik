@@ -1,0 +1,328 @@
+{
+  "title": "Entry-Level ML Engineer Interview",
+  "description": "Interview questions for entry-level ML engineering positions. Covers ML fundamentals, algorithms, deep learning basics, model evaluation, and data processing.",
+  "difficulty": "entry-level",
+  "min_score_to_explain": 4,
+  "questions": [
+    {
+      "id": 1,
+      "topic": "Machine Learning Fundamentals",
+      "question": "What is the difference between supervised and unsupervised learning? Give one example of each.",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Supervised learning uses labeled data (input-output pairs)",
+        "Unsupervised learning uses unlabeled data (finds patterns)",
+        "Supervised: classification, regression (e.g., spam detection)",
+        "Unsupervised: clustering, dimensionality reduction (e.g., customer segmentation)",
+        "Supervised has a target variable to predict"
+      ],
+      "answer_template": "Supervised learning trains on labeled data where each example has an input and a known output/target. The model learns to map inputs to outputs. Examples: predicting house prices (regression), classifying emails as spam/not spam (classification). Unsupervised learning finds patterns in data without labels. Examples: grouping customers by behavior (clustering), reducing dimensions for visualization (PCA).",
+      "explanation": "In supervised learning, you have a dataset with input features and corresponding correct outputs (labels). The model learns the mapping from inputs to outputs. Think of it like a student learning from a textbook with answer keys. In unsupervised learning, you only have input data without any labels. The model must find structure on its own — like organizing a messy room without being told where each item goes. Supervised is used when you have historical data with known outcomes; unsupervised is used for exploration and pattern discovery."
+    },
+    {
+      "id": 2,
+      "topic": "Machine Learning Fundamentals",
+      "question": "Explain the bias-variance tradeoff. What happens when a model is underfitting versus overfitting?",
+      "difficulty": "medium",
+      "expected_key_points": [
+        "Bias: error from oversimplifying assumptions",
+        "Variance: error from sensitivity to training data fluctuations",
+        "Underfitting = high bias, low variance (too simple)",
+        "Overfitting = low bias, high variance (too complex)",
+        "Goal is to find the sweet spot that minimizes total error",
+        "Cross-validation helps detect overfitting"
+      ],
+      "answer_template": "Bias is the error from approximating a complex problem with a too-simple model. Variance is the error from being too sensitive to training data. Underfitting (high bias) means the model is too simple and misses patterns — it performs poorly on both training and test data. Overfitting (high variance) means the model memorizes the training data including noise — it performs great on training but poorly on test data. The tradeoff means decreasing bias increases variance and vice versa. The goal is to find the model complexity that minimizes total error.",
+      "explanation": "Imagine trying to fit a line through points that form a curve. A straight line (high bias) will miss many points — that's underfitting. A very wiggly line that passes through every single point (high variance) will be terrible at predicting new points — that's overfitting. You want a model that's complex enough to capture the true pattern but simple enough to generalize. Techniques like cross-validation, regularization, and having enough training data help manage this tradeoff."
+    },
+    {
+      "id": 3,
+      "topic": "Machine Learning Fundamentals",
+      "question": "What is cross-validation and why is it important? Explain k-fold cross-validation.",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Cross-validation evaluates model performance on unseen data",
+        "Splits data into multiple train/test subsets",
+        "K-fold: data split into k equal folds, each fold used as test once",
+        "Reduces variance in performance estimates",
+        "More reliable than a single train-test split",
+        "Helps detect overfitting"
+      ],
+      "answer_template": "Cross-validation is a technique for assessing how a model generalizes to independent data. It partitions the data into subsets, trains on some and tests on the rest, then repeats. In k-fold cross-validation, the data is split into k equal-sized folds. The model is trained on k-1 folds and tested on the remaining fold. This process repeats k times, with each fold used as the test set once. The final performance is the average across all k iterations. It provides a more robust estimate than a single train-test split and helps detect overfitting.",
+      "explanation": "A single train-test split might accidentally give you a lucky (or unlucky) result. K-fold cross-validation runs the experiment k times with different splits, so you get a more reliable estimate of model performance. Common choices are k=5 or k=10. Each data point gets to be in the test set exactly once. The average score across all folds is more trustworthy than a single split, and the variance across folds tells you how stable your model is."
+    },
+    {
+      "id": 4,
+      "topic": "Algorithms",
+      "question": "Explain how a decision tree works. What are the advantages and disadvantages?",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Tree structure with internal nodes (features) and leaf nodes (decisions)",
+        "Splits data based on feature values to maximize information gain",
+        "Easy to interpret and visualize",
+        "Prone to overfitting without pruning",
+        "Can handle both numerical and categorical data",
+        "Non-parametric, no feature scaling needed"
+      ],
+      "answer_template": "A decision tree works by recursively splitting the data based on feature values, creating a tree-like structure. Each internal node tests a feature, each branch represents the outcome, and each leaf holds a prediction. The splits are chosen to maximize purity (e.g., using Gini impurity or entropy). Advantages: easy to understand and interpret, handles mixed data types, no need for feature scaling. Disadvantages: prone to overfitting, sensitive to small data changes (high variance), can be biased toward features with many levels.",
+      "explanation": "Think of a decision tree like a game of 20 questions. At each step, you ask a question that best narrows down the possibilities. The algorithm picks the feature that best separates the data (most 'information gain'). For example, to classify whether a fruit is an apple or orange, the first split might be on color (red vs orange). Decision trees are great because you can explain every prediction. They're bad because they can grow too complex and memorize noise. That's why we often use ensembles like Random Forests instead."
+    },
+    {
+      "id": 5,
+      "topic": "Algorithms",
+      "question": "What is the difference between bagging and boosting in ensemble learning?",
+      "difficulty": "medium",
+      "expected_key_points": [
+        "Bagging trains models in parallel on bootstrap samples",
+        "Boosting trains models sequentially, each correcting previous errors",
+        "Bagging reduces variance (e.g., Random Forest)",
+        "Boosting reduces both bias and variance (e.g., XGBoost)",
+        "Bagging averages predictions; boosting uses weighted voting",
+        "Boosting can overfit if too many rounds"
+      ],
+      "answer_template": "Bagging (Bootstrap Aggregating) trains multiple models independently on random subsets of the data (with replacement) and averages their predictions. This reduces variance without increasing bias. Random Forest is a classic example. Boosting trains models sequentially — each new model focuses on correcting the errors made by previous models by giving more weight to misclassified examples. This reduces both bias and variance. Gradient Boosting, AdaBoost, and XGBoost are examples. Boosting typically achieves higher accuracy but can overfit if not tuned properly.",
+      "explanation": "Bagging is like asking multiple doctors independently to diagnose you, then taking the majority vote. Each doctor gets a slightly different set of patient records (sampled with replacement). Since they work independently, their errors are uncorrelated and cancel out. Boosting is like a teacher who keeps giving extra practice problems to a student on topics they got wrong. Each new model focuses on the mistakes of all previous models combined. Bagging is simpler and parallelizable; boosting is more powerful but needs careful tuning to avoid overfitting."
+    },
+    {
+      "id": 6,
+      "topic": "Algorithms",
+      "question": "Explain the intuition behind Support Vector Machines (SVM). What is a kernel trick?",
+      "difficulty": "medium",
+      "expected_key_points": [
+        "SVM finds the hyperplane that maximizes the margin between classes",
+        "Support vectors are the closest points to the decision boundary",
+        "Kernel trick maps data to higher dimensions without explicit computation",
+        "Enables finding non-linear decision boundaries",
+        "RBF kernel is common for non-linear problems",
+        "Works well in high-dimensional spaces"
+      ],
+      "answer_template": "SVM finds the hyperplane that best separates classes by maximizing the margin (distance between the hyperplane and the nearest points from each class). The nearest points are called support vectors — they 'support' the decision boundary. The kernel trick allows SVMs to handle non-linear data by implicitly mapping inputs to a higher-dimensional space where they become linearly separable, without actually computing the transformed coordinates. Common kernels include linear, polynomial, and RBF (radial basis function).",
+      "explanation": "Imagine two groups of points on paper that you want to separate with a line. SVM finds the line that has the widest 'street' between the groups — that's maximizing the margin. The points that touch the street edges are the support vectors. Now if the data is mixed up like concentric circles, a straight line won't work. The kernel trick is like lifting the paper into 3D where the circles become separable by a plane — but mathematically, the kernel function does this projection implicitly, avoiding the expensive computation of mapping every point."
+    },
+    {
+      "id": 7,
+      "topic": "Deep Learning",
+      "question": "What is a neural network? Explain the role of activation functions and name a few common ones.",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Neural network: layers of interconnected neurons with weights and biases",
+        "Input layer, hidden layers, output layer",
+        "Activation functions introduce non-linearity",
+        "Without activation, the network is just linear regression",
+        "ReLU: f(x)=max(0,x), most common for hidden layers",
+        "Sigmoid: outputs 0-1, used for binary classification",
+        "Softmax: outputs probability distribution, used for multi-class"
+      ],
+      "answer_template": "A neural network is composed of layers of interconnected nodes (neurons), where each connection has a weight. Information flows from input through hidden layers to output. Activation functions are applied to each neuron's output to introduce non-linearity — without them, the entire network would compute only linear transformations, no matter how many layers. Common activations: ReLU (fast, avoids vanishing gradient), Sigmoid (squashes to 0-1), Tanh (outputs -1 to 1), and Softmax (converts logits to probabilities for multi-class).",
+      "explanation": "Think of a neural network as a multi-stage information processing system. Each neuron receives inputs, multiplies them by weights, sums them, adds a bias, and passes through an activation function. The activation function is crucial because it lets the network learn complex patterns — a stack of linear operations is still linear. ReLU (Rectified Linear Unit) is the default choice because it's simple and helps with the vanishing gradient problem. Sigmoid is great for the final layer when you need probabilities. Without activation functions, deep networks would be as powerful as a single-layer perceptron."
+    },
+    {
+      "id": 8,
+      "topic": "Deep Learning",
+      "question": "What is gradient descent? Explain stochastic gradient descent (SGD) and mini-batch gradient descent.",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Gradient descent minimizes loss by moving in direction of steepest descent",
+        "Uses gradients (derivatives) to update parameters",
+        "Batch GD uses entire dataset per step (slow, accurate)",
+        "SGD uses one sample per step (fast, noisy)",
+        "Mini-batch uses a subset per step (balance of speed and stability)",
+        "Learning rate controls step size"
+      ],
+      "answer_template": "Gradient descent is an optimization algorithm that iteratively adjusts model parameters to minimize the loss function. It computes the gradient (partial derivative) of the loss with respect to each parameter and updates parameters in the opposite direction. Batch gradient descent computes the gradient using the entire dataset — accurate but slow. SGD uses one random training example per update — fast but noisy. Mini-batch gradient descent uses a small random subset (e.g., 32 or 64 samples) — balancing computational efficiency with stable convergence. The learning rate determines step size.",
+      "explanation": "Imagine you're in a foggy valley and want to reach the lowest point. Gradient descent is like feeling the ground slope beneath your feet and taking a step downhill. Batch GD checks the entire valley's slope before stepping (accurate but slow). SGD checks the slope at just one random spot and steps (fast but might go the wrong way sometimes). Mini-batch checks a small area — it's the standard approach in deep learning. The learning rate is your step size: too big and you'll overshoot; too small and you'll take forever."
+    },
+    {
+      "id": 9,
+      "topic": "Deep Learning",
+      "question": "What is the vanishing gradient problem and how do ReLU and batch normalization help address it?",
+      "difficulty": "medium",
+      "expected_key_points": [
+        "Gradients become extremely small in deep networks during backpropagation",
+        "Earlier layers learn very slowly or stop learning",
+        "Sigmoid/tanh saturate and squash gradients to near-zero",
+        "ReLU doesn't saturate for positive values, gradient stays 1",
+        "Batch normalization keeps activations in a reasonable range",
+        "ResNet skip connections also help"
+      ],
+      "answer_template": "The vanishing gradient problem occurs in deep networks when gradients become exponentially small as they're backpropagated through many layers, causing early layers to learn very slowly. Sigmoid and tanh activations are particularly prone because their gradients are bounded (max 0.25 for sigmoid). ReLU helps because its gradient is 1 for positive inputs, so gradients don't shrink as they pass through. Batch normalization normalizes layer outputs to have zero mean and unit variance, keeping activations away from saturating regions and maintaining healthy gradient flow.",
+      "explanation": "During backpropagation, the gradient gets multiplied by the derivative of each activation function at each layer. With sigmoid, the derivative is at most 0.25, so after 10 layers the gradient is (0.25)^10 = practically zero. The early layers barely learn. ReLU's derivative is either 0 or 1 — for active neurons, the gradient passes through unchanged. Batch normalization ensures each layer's outputs stay in a good numerical range, preventing both vanishing and exploding gradients. These two innovations were key to making deep networks (50+ layers) trainable."
+    },
+    {
+      "id": 10,
+      "topic": "Model Evaluation",
+      "question": "Explain precision, recall, and F1-score. When would you prioritize precision over recall?",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Precision = TP / (TP + FP) — how many predicted positives were correct",
+        "Recall = TP / (TP + FN) — how many actual positives were found",
+        "F1 = 2 * (P * R) / (P + R) — harmonic mean of precision and recall",
+        "Precision prioritized when false positives are costly (e.g., spam detection)",
+        "Recall prioritized when false negatives are costly (e.g., cancer detection)",
+        "F1 balances both when there's class imbalance"
+      ],
+      "answer_template": "Precision measures the accuracy of positive predictions: of all items predicted as positive, how many were actually positive. Recall measures the coverage of actual positives: of all actual positives, how many were correctly identified. F1-score is the harmonic mean of precision and recall, providing a single metric that balances both. Prioritize precision when false positives are expensive (e.g., marking legitimate emails as spam). Prioritize recall when false negatives are expensive (e.g., missing a cancer diagnosis). F1 is useful when you need a tradeoff between both.",
+      "explanation": "Think of precision as 'when the model says positive, how often is it right?' and recall as 'of all the actual positives, how many did the model catch?' If you're screening for a serious disease, you want high recall — missing a sick patient is terrible, even if it means some healthy people get falsely flagged for follow-up tests. If you're filtering spam, you want high precision — accidentally sending a work email to spam is worse than letting a few spam emails through. F1-score gives a balanced view when both matter."
+    },
+    {
+      "id": 11,
+      "topic": "Model Evaluation",
+      "question": "What is the confusion matrix? Explain each component with an example.",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Confusion matrix is a table summarizing classification performance",
+        "TP: correctly predicted positives",
+        "TN: correctly predicted negatives",
+        "FP: incorrectly predicted positives (Type I error)",
+        "FN: incorrectly predicted negatives (Type II error)",
+        "From these you derive accuracy, precision, recall, F1"
+      ],
+      "answer_template": "A confusion matrix is a 2x2 table comparing actual vs predicted labels. For a binary classifier predicting 'spam' (positive) vs 'not spam' (negative): True Positives (TP) are spam correctly flagged; True Negatives (TN) are legitimate emails correctly left alone; False Positives (FP) are legitimate emails wrongly marked as spam (Type I error); False Negatives (FN) are spam emails that slipped through (Type II error). From these values you calculate accuracy, precision (TP/(TP+FP)), recall (TP/(TP+FN)), and other metrics.",
+      "explanation": "The confusion matrix gives you the full picture of your classifier's mistakes, not just overall accuracy. For example, with 95% accuracy on a medical test for a rare disease (1% prevalence), you might have 0 FN and 495 FP out of 1000 patients — missing zero cases (great recall!) but panicking 495 healthy people (bad precision). The confusion matrix reveals these tradeoffs that accuracy alone hides."
+    },
+    {
+      "id": 12,
+      "topic": "Model Evaluation",
+      "question": "What is the ROC curve and AUC? How would you interpret AUC = 0.9?",
+      "difficulty": "medium",
+      "expected_key_points": [
+        "ROC plots True Positive Rate vs False Positive Rate at various thresholds",
+        "AUC measures the area under this curve",
+        "AUC = 1 is perfect classifier, AUC = 0.5 is random",
+        "AUC is threshold-independent",
+        "AUC = 0.9 means 90% chance model ranks a random positive above a random negative",
+        "ROC is useful for comparing models across thresholds"
+      ],
+      "answer_template": "The ROC (Receiver Operating Characteristic) curve plots the True Positive Rate (recall) against the False Positive Rate (1 - specificity) at various decision thresholds. AUC (Area Under the Curve) summarizes the model's performance across all thresholds — AUC of 1 means perfect separation, AUC of 0.5 means no better than random. AUC = 0.9 means there is a 90% probability that the model will rank a randomly chosen positive instance higher than a randomly chosen negative one. AUC is useful because it's threshold-independent.",
+      "explanation": "The ROC curve shows how your model's performance changes as you adjust the decision threshold. Imagine a spam filter: with a strict threshold you catch all spam but also flag lots of real emails (high TPR but also high FPR). With a lenient threshold you catch fewer spam but also flag fewer real emails. The ROC curve plots all these possibilities. AUC captures overall quality — 0.9 means excellent discrimination. It's like if you randomly picked one spam and one legitimate email, the model would rank the spam as 'more likely spam' 90% of the time."
+    },
+    {
+      "id": 13,
+      "topic": "Feature Engineering & Data",
+      "question": "What is feature scaling and why is it important? Explain standardization vs normalization.",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Feature scaling puts features on similar numerical ranges",
+        "Important for distance-based algorithms (SVM, k-NN, k-means)",
+        "Needed for gradient descent convergence",
+        "Standardization: (x - mean) / std, results in zero mean, unit variance",
+        "Normalization (min-max): (x - min) / (max - min), scales to [0, 1]",
+        "Standardization is robust to outliers; normalization is affected by outliers"
+      ],
+      "answer_template": "Feature scaling ensures all features contribute equally to the model. It's critical for algorithms that use distance measures (SVM, k-NN, k-means) or gradient-based optimization (neural networks, logistic regression). Without scaling, features with larger numerical ranges dominate. Standardization transforms data to have mean 0 and standard deviation 1 — it's less affected by outliers. Normalization (min-max scaling) scales data to a fixed range (usually [0, 1]) — it's useful when you need bounded values but is sensitive to outliers.",
+      "explanation": "Consider a dataset with 'age' (20-80) and 'salary' ($30K-$200K). Without scaling, salary would dominate any distance calculation. Standardization subtracts the mean and divides by standard deviation — each feature becomes a 'number of standard deviations from the mean'. This works well even with outliers because it's based on spread, not range. Min-max scaling squeezes values into [0,1] — useful for neural networks that expect bounded inputs, but a single extreme outlier will compress all other values into a tiny range. Tree-based models (Random Forest, XGBoost) don't need scaling."
+    },
+    {
+      "id": 14,
+      "topic": "Feature Engineering & Data",
+      "question": "How do you handle missing data in a dataset? What are the tradeoffs of different approaches?",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Remove rows with missing values (simple but loses data)",
+        "Remove features with too many missing values",
+        "Mean/median/mode imputation (simple but ignores correlations)",
+        "Advanced imputation: k-NN, regression, MICE",
+        "Flag missingness with an indicator variable",
+        "Choice depends on missing data mechanism (MCAR, MAR, MNAR)"
+      ],
+      "answer_template": "Common approaches: (1) Drop rows — simple but loses data, only acceptable if few rows missing. (2) Drop features — if >50-70% missing, the feature may be unusable. (3) Mean/median imputation — quick but artificially reduces variance and ignores relationships between features. (4) Model-based imputation (k-NN, regression) — more accurate but computationally expensive. (5) Use a 'missing' indicator — helps the model learn if missingness itself is informative. The best approach depends on how much data is missing, why it's missing, and the algorithm being used.",
+      "explanation": "Imagine a survey where older people skip the 'income' question. If you just take the average income, you'll underestimate income for younger respondents and overestimate for older ones. The missing mechanism matters: MCAR (missing completely at random — easiest, deletion is safe), MAR (missing at random — depends on observed data, imputation works), MNAR (missing not at random — the missingness depends on the missing value itself, hardest to handle). A simple starting point: if <5% data missing, drop rows or use mean imputation. If >5%, use more sophisticated methods. Always evaluate the impact on your model."
+    },
+    {
+      "id": 15,
+      "topic": "Regularization & Optimization",
+      "question": "Explain L1 (Lasso) and L2 (Ridge) regularization. How do they differ and when would you use each?",
+      "difficulty": "medium",
+      "expected_key_points": [
+        "Regularization adds penalty to loss function to prevent overfitting",
+        "L1 adds |weights| penalty (sum of absolute values)",
+        "L2 adds weights² penalty (sum of squares)",
+        "L1 drives some weights to exactly zero (feature selection)",
+        "L2 shrinks weights but doesn't zero them",
+        "L1 good for high-dimensional sparse problems; L2 for general overfitting"
+      ],
+      "answer_template": "Regularization adds a penalty term to the loss function to discourage large weights, which helps prevent overfitting. L1 (Lasso) adds the sum of absolute weights — it can drive some weights to exactly zero, performing automatic feature selection. L2 (Ridge) adds the sum of squared weights — it shrinks all weights toward zero but rarely to exactly zero. L1 is useful when you have many irrelevant features (high-dimensional sparse problems). L2 is better when most features are relevant and you want smooth weight shrinkage. Elastic Net combines both.",
+      "explanation": "Think of L1 as 'I want a simple explanation — use as few features as possible.' It creates sparse models where unimportant features get zero weight. It's great for interpretability when you have hundreds of features. L2 is more like 'I want all features to contribute a little bit but none too much.' It distributes weight more evenly. L2 handles correlated features gracefully (if two features are correlated, they share the weight). In practice, Elastic Net (L1 + L2 combined) often works best, giving you both sparsity and grouping of correlated features."
+    },
+    {
+      "id": 16,
+      "topic": "Regularization & Optimization",
+      "question": "What is dropout in neural networks and how does it prevent overfitting?",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Dropout randomly deactivates neurons during training",
+        "Each neuron has probability p of being kept (commonly 0.5)",
+        "Prevents co-adaptation of neurons",
+        "Acts as ensemble learning (trains many subnetworks)",
+        "During inference, all neurons used (scaled by keep probability)",
+        "Effective regularization technique for deep networks"
+      ],
+      "answer_template": "Dropout is a regularization technique for neural networks where randomly selected neurons are 'dropped out' (set to zero) during training with probability p. This prevents neurons from co-adapting and relying too heavily on specific other neurons. It effectively trains an ensemble of exponentially many subnetworks. During inference, all neurons are used but their outputs are scaled by the keep probability (inverted dropout). Dropout is computationally cheap and works well for large networks. A typical keep probability is 0.5 for hidden layers and 0.8 for input layers.",
+      "explanation": "Imagine a group project where the teacher randomly sends some students home each day. The remaining students have to cover the missing ones' work, so everyone learns to be self-reliant and adaptable. That's dropout — it forces each neuron to be useful independently rather than relying on teammates. The result is a model that generalizes better because it hasn't learned brittle dependencies between specific neurons. It's one of the most effective and widely used regularization techniques in deep learning."
+    },
+    {
+      "id": 17,
+      "topic": "ML Pipeline & Deployment",
+      "question": "What is the difference between training, validation, and test sets? How should each be used?",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Training set: used to learn model parameters (weights)",
+        "Validation set: used to tune hyperparameters and select models",
+        "Test set: used only once at the end to evaluate final performance",
+        "Validation set prevents overfitting to the test set",
+        "Common splits: 60/20/20 or 70/15/15",
+        "Test set must remain untouched until final evaluation"
+      ],
+      "answer_template": "The training set is used to fit the model's parameters (learning the weights). The validation set is used during development to tune hyperparameters, compare architectures, and make design decisions — it gives an unbiased estimate during iteration. The test set is held back until the very end and used only once to report the final performance. This separation is critical because tuning to the test set would give overly optimistic results. A common split is 70% train, 15% validation, 15% test, but this depends on dataset size.",
+      "explanation": "Think of studying for an exam. Training is your textbook (you learn from it). Validation is practice exams (you check your understanding and adjust your study approach). The test is the actual exam — you take it once to see how well you've learned. If you practiced using the actual exam questions, you'd get a perfect score but it wouldn't reflect real learning. Similarly, if you tune your model to the test set, your reported accuracy will be misleadingly high. Always keep the test set in a locked vault until the very end."
+    },
+    {
+      "id": 18,
+      "topic": "ML Pipeline & Deployment",
+      "question": "What is data leakage in machine learning? Give an example and explain how to prevent it.",
+      "difficulty": "medium",
+      "expected_key_points": [
+        "Data leakage: information from outside training set influences the model",
+        "Creates overly optimistic performance that doesn't generalize",
+        "Common sources: scaling before split, using future data, target leakage",
+        "Example: scaling the entire dataset before train/test split",
+        "Prevention: split first, then apply transformations only on training data",
+        "Be careful with time series: don't use future data to predict past"
+      ],
+      "answer_template": "Data leakage occurs when information from outside the training set (including from the test set or future data) inadvertently influences the model, leading to unrealistically good performance that doesn't generalize. A common example: applying standardization to the entire dataset before splitting — the training set 'sees' the mean/std of the test set. Another: in time series, using future data to predict past events. Prevention: always split into train/test first, then fit transformations (scaling, imputation) only on training data and apply them to test data. For time series, use time-based splits.",
+      "explanation": "Data leakage is the #1 cause of embarrassingly wrong ML results. Imagine building a model to predict hospital readmission and you include 'number of follow-up appointments scheduled' as a feature — the appointment was scheduled after discharge, using information that wouldn't be available at prediction time. Your model would look perfect but fail in production. The golden rule: any transformation that uses information from the test set (including summary statistics) is leakage. Fit everything on training data only, then transform test data using the training-derived parameters."
+    },
+    {
+      "id": 19,
+      "topic": "ML Concepts",
+      "question": "What is the curse of dimensionality? How does it affect machine learning models?",
+      "difficulty": "medium",
+      "expected_key_points": [
+        "As dimensions increase, data becomes sparse in the feature space",
+        "Distance metrics become less meaningful (all points seem far apart)",
+        "More dimensions = exponential increase in data needed to maintain density",
+        "Overfitting risk increases with more features",
+        "Dimensionality reduction (PCA, t-SNE) helps mitigate",
+        "Feature selection is important for high-dimensional data"
+      ],
+      "answer_template": "The curse of dimensionality refers to various phenomena that arise when working with high-dimensional data. As the number of features increases, the volume of the feature space grows exponentially, making the data sparse. Distances between points become similar and less informative — for many distance metrics, all points appear equally far apart. This degrades performance of distance-based algorithms (k-NN, SVM, clustering). More features also increase overfitting risk. Solutions include dimensionality reduction (PCA, feature selection) and collecting more data (which scales exponentially with dimensions).",
+      "explanation": "Imagine filling a 1D line of length 1 with 10 random points — they're spread out but you can see gaps. Now fill a 2D square of side 1 with 10 points — they're even more spread out. In 10D hypercube, those 10 points are lost in space. To maintain the same density, you'd need 10^10 points. This sparsity means that a k-NN classifier might find its nearest neighbor to be very far away and not actually 'similar'. Plus, in high dimensions, many features could be noise, causing overfitting. That's why dimensionality reduction and feature selection are crucial in fields like genomics (thousands of genes, few samples)."
+    },
+    {
+      "id": 20,
+      "topic": "ML Concepts",
+      "question": "Explain the difference between parametric and non-parametric models. Give one example of each.",
+      "difficulty": "easy",
+      "expected_key_points": [
+        "Parametric models have fixed number of parameters regardless of data size",
+        "Non-parametric models: number of parameters grows with data",
+        "Parametric: assumes specific data distribution (e.g., linear regression)",
+        "Non-parametric: no strong assumptions about data distribution",
+        "Parametric: faster, needs less data, but higher bias",
+        "Non-parametric: more flexible, needs more data, computationally expensive"
+      ],
+      "answer_template": "Parametric models have a fixed, finite set of parameters independent of the training data size. They assume a specific functional form for the data (e.g., linear regression assumes the relationship is linear). Examples: linear regression, logistic regression. Non-parametric models don't assume a fixed form — their complexity grows with the data. They're more flexible but need more data and computation. Examples: k-Nearest Neighbors, decision trees, kernel SVM. Parametric models are simpler and faster but can underfit; non-parametric models are more flexible but can overfit and are slower at inference.",
+      "explanation": "A parametric model is like saying 'I think the data follows a straight line — I just need to find the slope and intercept.' Two parameters, regardless of how many data points you have (linear regression). A non-parametric model is like saying 'I'll let the data speak for itself' — k-NN doesn't assume any shape, it just memorizes (or indexes) all training points and checks neighbors at prediction time. Parametric is faster and works with less data but makes stronger assumptions. Non-parametric is more flexible but computationally heavier."
+    }
+  ]
+}
