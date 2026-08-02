@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Interviewer</title>
+<style>
+  :root {
+    --bg-1: #0b1020;
+    --bg-2: #121a33;
+    --surface: rgba(255, 255, 255, 0.045);
+    --surface-strong: #1b2437;
+    --border: rgba(255, 255, 255, 0.09);
+    --white-soft: rgba(255, 255, 255, 0.05);
+    --text: #e9eef7;
+    --muted: #94a3bd;
+    --accent-fill: #4f46e5;
+    --accent-fill-hover: #4338ca;
+    --accent-1: #6366f1;
+    --accent-2: #22d3ee;
+    --accent-2-soft: rgba(34, 211, 238, 0.14);
+    --accent-2-line: rgba(34, 211, 238, 0.4);
+    --ok: #34d399;
+    --ok-soft: rgba(52, 211, 153, 0.12);
+    --ok-line: rgba(52, 211, 153, 0.28);
+    --bg-bloom: rgba(99, 102, 241, 0.16);
+    --shadow-elev: 0 8px 20px rgba(2, 6, 23, 0.5);
+    --radius: 18px;
+    --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    color: var(--text);
+    background:
+      radial-gradient(1100px 600px at 85% -10%, var(--bg-bloom), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    min-height: 100vh;
+    display: flex; justify-content: center;
+    padding: 2rem 1.25rem 4rem;
+  }
+  .container { max-width: 680px; width: 100%; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .brand { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+  .brand .orb { width: 38px; height: 38px; border-radius: 12px; flex: none; background: var(--accent-fill); display: grid; place-items: center; }
+  .brand h1 { font-family: var(--font-mono); font-size: 1.02rem; font-weight: 600; letter-spacing: -0.01em; }
+  .brand .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .privacy-pill { flex: none; display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.72rem; font-weight: 600; color: var(--ok); background: var(--ok-soft); border: 1px solid var(--ok-line); padding: 0.35rem 0.7rem; border-radius: 999px; }
+  .privacy-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+  .stage { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.6rem 1.5rem; box-shadow: var(--shadow-elev); }
+  .presence { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.1rem; }
+  .avatar { width: 46px; height: 46px; border-radius: 50%; flex: none; position: relative; background: var(--accent-fill); display: grid; place-items: center; font-weight: 700; color: white; }
+  .stage.listening .avatar::after { opacity: 1; animation: ring 1.6s ease-out infinite; }
+  .avatar::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(99,102,241,0.35); opacity: 0; }
+  @keyframes ring { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.45); opacity: 0; } }
+  .presence .who { font-size: 0.86rem; font-weight: 600; }
+  .presence .who small { display: block; font-weight: 500; color: var(--muted); margin-top: 1px; }
+  .wave { display: flex; align-items: center; gap: 3px; height: 22px; opacity: 0.25; margin-left: auto; }
+  .stage.listening .wave { opacity: 1; }
+  .wave i { width: 3px; height: 100%; border-radius: 3px; background: var(--accent-2); transform: scaleY(0.3); transform-origin: center; animation: bounce 0.9s ease-in-out infinite; }
+  .wave i:nth-child(2) { animation-delay: 0.12s; }
+  .wave i:nth-child(3) { animation-delay: 0.24s; }
+  .wave i:nth-child(4) { animation-delay: 0.36s; }
+  .wave i:nth-child(5) { animation-delay: 0.48s; }
+  @keyframes bounce { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+  .question { font-size: 1.12rem; line-height: 1.55; min-height: 2.8rem; }
+  .question .empty { color: var(--muted); }
+  .status-row { display: flex; align-items: center; gap: 0.55rem; margin-top: 1rem; font-size: 0.85rem; color: var(--muted); }
+  .status-row .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+  .status-row.listening { color: var(--accent-2); }
+  .status-row.listening .pulse { background: var(--accent-2); animation: blink 1.2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: 0.35; } }
+  #phases { display: flex; gap: 0.4rem; margin-top: 1.1rem; flex-wrap: wrap; }
+  .phase { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; padding: 0.25rem 0.6rem; border-radius: 999px; background: var(--white-soft); color: var(--muted); border: 1px solid var(--border); }
+  .phase.active { background: var(--accent-2-soft); color: var(--accent-2); border-color: var(--accent-2-line); }
+  .phase.done { background: var(--ok-soft); color: var(--ok); border-color: var(--ok-line); }
+  #chat { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .msg { max-width: 82%; padding: 0.75rem 0.95rem; border-radius: 16px; font-size: 0.94rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+  .msg-interviewer { align-self: flex-start; background: var(--surface-strong); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+  .msg-user { align-self: flex-end; background: var(--accent-fill); color: white; border-bottom-right-radius: 6px; }
+  .result { margin-top: 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--shadow-elev); }
+  .result h3 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; }
+  .score-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  .score-item { background: var(--white-soft); border-radius: 12px; padding: 0.5rem 0.9rem; text-align: center; flex: 1; min-width: 84px; }
+  .score-item .label { font-size: 0.68rem; text-transform: capitalize; color: var(--muted); }
+  .score-item .value { font-size: 1.15rem; font-weight: 700; margin-top: 2px; }
+  .gaps-box { margin-top: 0.8rem; padding: 0.7rem 0.85rem; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; background: var(--white-soft); }
+  .gaps-box strong { color: var(--accent-1); font-weight: 650; }
+  .controls { display: flex; gap: 0.75rem; margin-top: 1.4rem; }
+  .btn { appearance: none; border: none; cursor: pointer; font-family: var(--font); font-size: 0.95rem; font-weight: 600; padding: 0.8rem 1.6rem; border-radius: 12px; transition: transform 0.08s, box-shadow 0.15s, opacity 0.15s; }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary { background: var(--accent-fill); color: white; flex: 1; box-shadow: var(--shadow-elev); }
+  .btn-primary:not(:disabled):hover { background: var(--accent-fill-hover); }
+  .btn-secondary { background: var(--white-soft); color: var(--text); border: 1px solid var(--border); }
+  .hidden { display: none; }
+  footer { margin-top: 1.6rem; text-align: center; font-size: 0.72rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <div class="orb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+      </div>
+      <div>
+        <h1>AI Interviewer</h1>
+        <div class="sub">Jupyter / Colab edition</div>
+      </div>
+    </div>
+    <span class="privacy-pill"><span class="dot"></span>on-device</span>
+  </header>
+
+  <section class="stage" id="stage">
+    <div class="presence">
+      <div class="avatar">AI</div>
+      <div class="who">Your interviewer<small>warm, patient, honest</small></div>
+      <div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="question" id="question"><span class="empty">Press Start to begin</span></div>
+    <div class="status-row" id="statusWrap"><span class="pulse" aria-hidden="true"></span><span id="status">Ready when you are</span></div>
+    <div id="phases" class="hidden">
+      <span class="phase" id="phase1">Transcribing</span>
+      <span class="phase" id="phase2">Evaluating</span>
+    </div>
+  </section>
+
+  <div id="chat"></div>
+  <div id="result" class="result hidden">
+    <h3>Turn feedback</h3>
+    <div class="score-row" id="scores"></div>
+    <div class="gaps-box" id="gaps" style="display:none"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="startBtn" onclick="start()">Start Interview</button>
+    <button class="btn btn-secondary hidden" id="endBtn" onclick="endInterview()">End Interview</button>
+  </div>
+
+  <footer>Talk into your mic. Wait for the reply to finish, then answer naturally.</footer>
+</div>
+
+<script>
+let micStream = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let isListening = false;
+let running = false;
+let currentAudio = null;
+
+let noAnswerTimer = null;
+let vadInterval = null;
+let vAdvCtx = null;
+let vadSource = null;
+let vadAnalyser = null;
+let speechDetected = false;
+let silenceMs = 0;
+
+const NO_ANSWER_MS = 15000;
+const ENDPOINT_MS = 1800;
+const RMS_THRESHOLD = 0.01;
+
+const $ = id => document.getElementById(id);
+
+function bubble(role, text) {
+  if (!text) return;
+  const div = document.createElement("div");
+  div.className = "msg msg-" + role;
+  div.textContent = text;
+  $("chat").appendChild(div);
+  $("chat").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function setStatus(msg, listening) {
+  $("status").textContent = msg;
+  $("statusWrap").classList.toggle("listening", !!listening);
+}
+
+function setPhase(id, state) { $(id).className = "phase " + state; }
+function resetPhases() { setPhase("phase1", "pending"); setPhase("phase2", "pending"); }
+
+function playAudio(url, onDone) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (!url) { console.warn("no audio url (TTS unavailable server-side)"); setStatus("No audio from server — check notebook log"); if (onDone) onDone(); return; }
+  const a = new Audio(url);
+  currentAudio = a;
+  a.onended = () => { currentAudio = null; if (onDone) onDone(); };
+  a.onerror = () => { console.error("play error", url); currentAudio = null; if (onDone) onDone(); };
+  a.play().catch(e => { console.error("play rejected:", e); if (onDone) onDone(); });
+}
+
+async function toWav(blob) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const audioBuf = await ctx.decodeAudioData(await blob.arrayBuffer());
+  const offline = new OfflineAudioContext(1, Math.ceil(audioBuf.duration * 16000), 16000);
+  const src = offline.createBufferSource();
+  src.buffer = audioBuf;
+  src.connect(offline.destination);
+  src.start();
+  const rendered = await offline.startRendering();
+  return encodeWav(rendered.getChannelData(0));
+}
+
+function encodeWav(samples) {
+  const sr = 16000;
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, "RIFF"); view.setUint32(4, 36 + samples.length * 2, true); w(8, "WAVE");
+  w(12, "fmt "); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true); view.setUint32(24, sr, true); view.setUint32(28, sr * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true); w(36, "data");
+  view.setUint32(40, samples.length * 2, true);
+  let off = 44;
+  for (let i = 0; i < samples.length; i++) {
+    let s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true); off += 2;
+  }
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
+async function start() {
+  $("startBtn").disabled = true;
+  $("result").classList.add("hidden");
+  $("phases").classList.remove("hidden");
+  resetPhases();
+  setStatus("Starting interview...");
+  try {
+    if (!micStream) micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const res = await fetch("/start", { method: "POST" });
+    const data = await res.json();
+    $("question").textContent = data.reply || "";
+    running = true;
+    $("endBtn").classList.remove("hidden");
+    $("startBtn").classList.add("hidden");
+    setStatus("Speaking...");
+    playAudio(data.audio_url, () => startListening());
+  } catch (e) {
+    setStatus("Error: " + e.message);
+    $("startBtn").disabled = false;
+  }
+}
+
+function startListening() {
+  if (!running || isListening) return;
+  isListening = true;
+  $("stage").classList.add("listening");
+  setStatus("Listening — answer naturally", true);
+  audioChunks = [];
+  speechDetected = false;
+  silenceMs = 0;
+
+  const mime = ["audio/webm;codecs=opus", "audio/webm"].find(m => MediaRecorder.isTypeSupported(m)) || "";
+  try { mediaRecorder = new MediaRecorder(micStream, mime ? { mimeType: mime } : undefined); }
+  catch { mediaRecorder = new MediaRecorder(micStream); }
+
+  mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) audioChunks.push(e.data); };
+  mediaRecorder.onstop = async () => {
+    stopVad();
+    isListening = false;
+    $("stage").classList.remove("listening");
+    if (!audioChunks.length) { startListening(); return; }
+    const blob = new Blob(audioChunks, { type: "audio/webm" });
+    const wav = await toWav(blob);
+    await sendAudio(wav);
+  };
+  mediaRecorder.start(250);
+  startVad();
+
+  noAnswerTimer = setTimeout(() => {
+    if (!speechDetected) {
+      setStatus("No answer — explaining...");
+      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+    }
+  }, NO_ANSWER_MS);
+}
+
+function startVad() {
+  vAdvCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (vAdvCtx.state === "suspended") vAdvCtx.resume();
+  vadSource = vAdvCtx.createMediaStreamSource(micStream);
+  vadAnalyser = vAdvCtx.createAnalyser();
+  vadAnalyser.fftSize = 2048;
+  vadSource.connect(vadAnalyser);
+  const buf = new Float32Array(vadAnalyser.fftSize);
+  vadInterval = setInterval(() => {
+    vadAnalyser.getFloatTimeDomainData(buf);
+    let sum = 0;
+    for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    const rms = Math.sqrt(sum / buf.length);
+    if (rms > RMS_THRESHOLD) {
+      if (!speechDetected) { speechDetected = true; clearTimeout(noAnswerTimer); noAnswerTimer = null; }
+      silenceMs = 0;
+    } else {
+      silenceMs += 100;
+      if (speechDetected && silenceMs >= ENDPOINT_MS) {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      }
+    }
+  }, 100);
+}
+
+function stopVad() {
+  if (vadInterval) { clearInterval(vadInterval); vadInterval = null; }
+  if (noAnswerTimer) { clearTimeout(noAnswerTimer); noAnswerTimer = null; }
+  if (vadSource) { try { vadSource.disconnect(); } catch (e) {} vadSource = null; }
+  if (vAdvCtx) { try { vAdvCtx.close(); } catch (e) {} vAdvCtx = null; }
+}
+
+async function sendAudio(blob) {
+  resetPhases();
+  setPhase("phase1", "active");
+  setStatus("Processing...");
+  const fd = new FormData();
+  fd.append("audio", blob, "answer.wav");
+  try {
+    const res = await fetch("/turn", { method: "POST", body: fd });
+    const data = await res.json();
+    handleTurnResponse(data);
+  } catch (e) {
+    setStatus("Error: " + e.message);
+    startListening();
+  }
+}
+
+function handleTurnResponse(data) {
+  if (data.error) { setStatus("Error: " + data.error); startListening(); return; }
+
+  if (data.transcript && data.transcript !== "[no answer]") bubble("user", data.transcript);
+
+  if (data.reply) bubble("interviewer", data.reply);
+
+  setPhase("phase1", "done");
+  $("result").classList.remove("hidden");
+
+  setPhase("phase2", "active");
+  const scoresHtml = ["relevance_score", "completeness_score", "clarity_score"]
+    .filter(k => data.scores && data.scores[k])
+    .map(k => `<div class="score-item"><div class="label">${k.replace("_score", "")}</div><div class="value">${data.scores[k]}/10</div></div>`)
+    .join("");
+  $("scores").innerHTML = scoresHtml;
+  setPhase("phase2", "done");
+
+  if (data.gaps && data.gaps.length) {
+    $("gaps").style.display = "block";
+    $("gaps").innerHTML = "<strong>Missed / to improve:</strong> " + data.gaps.join("; ");
+  } else {
+    $("gaps").style.display = "none";
+  }
+
+  if (data.reply) $("question").textContent = data.reply;
+
+  setStatus("Speaking...");
+  playAudio(data.audio_url, () => {
+    if (data.done) { setStatus("All questions completed. Press End Interview."); running = false; }
+    else startListening();
+  });
+}
+
+async function endInterview() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+  stopVad();
+  isListening = false;
+  running = false;
+  $("stage").classList.remove("listening");
+  // Notebook saves on interview completion; end just resets the UI.
+  setStatus("Interview ended.");
+  $("phases").classList.add("hidden");
+  $("endBtn").classList.add("hidden");
+  $("startBtn").classList.remove("hidden");
+  $("startBtn").disabled = false;
+}
+</script>
+</body>
+</html>
